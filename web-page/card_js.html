@@ -1,5 +1,5 @@
 <!--
- * @Author: BIYUEHU biyuehuya@qq.com
+ * @Author: Biyuehu biyuehuya@gmail.com
  * @Blog: http://imlolicon.tk
  * @Date: 2022-10-03 12:16:48
 -->
@@ -11,72 +11,72 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Card Page</title>
+    <link rel="shortcut icon" href="https://bilibili.com/favicon.ico">
     <link rel="stylesheet" href="./card_style.css">
     <meta name="referrer" content="never">
 </head>
 
 <body>
-    <div id="animeInfo"></div>
-    <script type="module">
-        //Config
-        const uid = 293767574;
+    <div id="animeInfo">
+        <span style="color:pink">疯狂加载中ヘ(_ _ヘ)...</span>
+    </div>
+    <script>
+        /* 配置区 */
+        const Api = 'https://huliapi.xyz/api/getbilianime';
+        const Uid = 2;
+        const onlyAnime = true;
 
+
+
+        /* ...... */
+        document.title = `${Uid}的追番列表`
         let httpRequest = new XMLHttpRequest();
-        let url = "http://82.157.165.201/api/getbilianime?uid=" + uid;
+        let url = `${Api}?uid=${Uid}&onlyanime=${onlyAnime === true ? 'true' : 'false'}`;
         httpRequest.open('GET', url, true);
         httpRequest.send();
         httpRequest.onreadystatechange = function () {
             if (httpRequest.readyState == 4 && httpRequest.status == 200) {
                 let result = httpRequest.responseText;
                 result = JSON.parse(result);
-                let nums = result.data.nums;
+                let count = result.data.count;
                 let listData = result.data.list;
 
                 let back = '';
-                for (let i = 0; i < listData.length; i++) {
-                    let listDataTemp = listData[i];
+                listData.forEach(data => {
+                    let { title, subtitle, descr, cover, setnum, showtime, badge } = data;
 
-                    let { title, subtitle, descr, cover, setnum, showtime, badge } = listDataTemp;
+                    /* badge处理 */
+                    badgeList = {
+                        '独家': '<span style="background-color:#00C0FF;color:#FFFFFF">独家</span>',
+                        '出品': '<span style="background-color:#00C0FF;color:#FFFFFF">出品</span>',
+                        '会员专享': '<span style="background-color:#FB7299;color:#FFFFFF">会员专享</span>',
+                        '限时免费': '<span style="background-color:#FB7299;color:#FFFFFF">限时免费</span>'
+                    };    
+                    badge = badgeList[badge] ?? '';
 
-                    switch (badge) {
-                        case '独家':
-                            badge = `<span style="background-color:#00C0FF;color:#FFFFFF">${badge}</span>`;
-                            break;
-                        case '出品':
-                            badge = `<span style="background-color:#00C0FF;color:#FFFFFF">${badge}</span>`;
-                            break;
-                        case '会员专享':
-                            badge = `<span style="background-color:#FB7299;color:#FFFFFF">${badge}</span>`;
-                            break;
-                        case '限时免费':
-                            badge = `<span style="background-color:#FB7299;color:#FFFFFF">${badge}</span>`;
-                            break;
-                        default:
+                    /* 标签处理 */
+                    let tags = '';
+                    if (data.tags != null) {
+                        data.tags.forEach(tag => {
+                            tags += ('、' + tag);
+                        });
+                        tags = tags.substr(1);
+                    } else {
+                        tags = '无';
                     }
 
-                    let tagsTemp = listDataTemp.tags;
-                    let max, tags;
-
-                    tagsTemp.length > 5 ? max = 5 : max = tagsTemp.length;
-                    for (let a = 0; a < max; a++) {
-                        if (a == 0) {
-                            tags = tagsTemp[0];
-                        }
-                        tags = tags + '、' + tagsTemp[a];
-                    }
-
-                    back = back + `<section style="margin-bottom: 15px">
-        <joe-card-default label="${title}" width="50"><span class="_temp" style="display: none"><br><strong>${title}</strong> ${subtitle}<br>${descr}<span style="display: block;" data-fancybox="Joe" href="${cover}"><img src="${cover}" height="300px"></span><br></span><span class="_content" style="display: block;">
-                <div class="joe_card__default" style="width: 50">
-                    <div class="joe_card__default-title">${badge} <strong>${title}</strong> <span style="color:purple">${subtitle}</span></div>
-                    <div><span style="color:orange"><strong>标签:</strong>${tags}</span><br>
-                    ${descr}<span style="display: block;" href="${cover}"><img src="${cover}" height="200px"></span></div>
-                    <i><span style="color:red">${setnum}</span> ${showtime}</i>
-                </div>
-            </span></joe-card-default>
-        </section>`;
-                }
-                document.getElementById('animeInfo').innerHTML = `<h2><strong style="color:pink">UID:${uid}</strong> 的追番列表 <span style="color:red">总计:${nums}部</span></h2>` + back;
+                    back += `<section style="margin-bottom: 15px">
+            <joe-card-default label="${title}" width="50"><span class="_temp" style="display: none"><br><strong>${title}</strong> ${subtitle}<br>${descr}<span style="display: block;" data-fancybox="Joe" href="${cover}"><img src="${cover}" height="300px"></span><br></span><span class="_content" style="display: block;">
+                    <div class="joe_card__default" style="width: 50">
+                        <div class="joe_card__default-title">${badge} <strong>${title}</strong> <span style="color:purple">${subtitle}</span></div>
+                        <div><span style="color:orange"><strong>标签:</strong>${tags}</span><br>
+                        ${descr}<span style="display: block;" href="${cover}"><img src="${cover}" height="200px"></span></div>
+                        <i><span style="color:red">${setnum}</span> ${showtime}</i>
+                    </div>
+                </span></joe-card-default>
+            </section>`;
+                });
+                document.getElementById('animeInfo').innerHTML = `<h2><strong style="color:pink">UID:${Uid}</strong> 的追番列表 <span style="color:red">总计:${count}部</span></h2>` + back;
             }
         }
     </script>

@@ -1,60 +1,74 @@
 <?php
 /*
- * @Author: BIYUEHU biyuehuya@qq.com
+ * @Author: Biyuehu biyuehuya@gmail.com
  * @Blog: http://imlolicon.tk
  * @Date: 2022-10-02 21:22:06
  */
 header('Access-Control-Allow-origin: *');
 header('Content-type: application/json');
 
-$uid = trim($_GET['uid']);
+$uid = trim($_REQUEST['uid']);
+$onlyanime = $_REQUEST['onlyanime'] == 'true' || $_REQUEST['onlyanime'] === true ? true : false;
 
 $page = 1;
 $request = file_get_contents('http://api.bilibili.com/x/space/bangumi/follow/list?type=1&pn=' . $page . '&ps=30&vmid=' . $uid);
 $request = json_decode($request);
 
 $judge = count($request->data->list);
-$animeDataAll = [];
-$nums = 0;
+$animeDataAll = array();
+$count = 0;
 $code = 501;
 
 if ($uid != null) {
     $code = 500;
     while ($judge > 0) {
-        $nums = $judge + $nums;
-        for ($i = 0; $i < $judge; $i++) {
-            $animeDataTemp = ($request->data->list)[$i];
+        $animeDataArr = $request->data->list;
+        foreach ($animeDataArr as $value) {
+            $count++;
+            $areas = ($value->areas)[0]->name;
+            if ($onlyanime == true && $areas != '日本') {
+                continue;
+            }
+    
+    
             $animeData = array(
-                'type' => $animeDataTemp->season_type_name,
-                'title' => addslashes($animeDataTemp->title),
-                'subtitle' => addslashes($animeDataTemp->subtitle),
-                'tags' => $animeDataTemp->styles,
-                'descr' => addslashes($animeDataTemp->evaluate),
-                'cover' => ($animeDataTemp->cover),
-                'setnum' => $animeDataTemp->new_ep->index_show,
-                'isnew' => $animeDataTemp->isnew,
-                'showtime' => $animeDataTemp->publish->release_date_show,
-                'areas' => ($animeDataTemp->areas)[0]->name,
-                'badge' => $animeDataTemp->badge
+                'type' => $value->season_type_name,
+                'title' => $value->title,
+                'subtitle' => $value->subtitle,
+                'tags' => $value->styles,
+                'descr' => $value->evaluate,
+                'cover' => ($value->cover),
+                'setnum' => $value->new_ep->index_show,
+                'isnew' => $value->isnew ? true : false,
+                'showtime' => $value->publish->release_date_show,
+                'areas' => $areas,
+                'badge' => $value->badge
             );
             array_push($animeDataAll, $animeData);
         }
 
         $page = $page + 1;
-        $request = file_get_contents('http://api.bilibili.com/x/space/bangumi/follow/list?type=1&pn=' . $page . '&ps=30&vmid=293767574');
+        $request = file_get_contents('http://api.bilibili.com/x/space/bangumi/follow/list?type=1&pn=' . $page . '&ps=30&vmid=' . $uid);
         $request = json_decode($request);
 
         $judge = count($request->data->list);
     }
 }
 
+$errorCode = array(
+    500 => 'success',
+    501 => 'error'
+);
+
 $result = array(
     'code' => $code,
+    'message' => $errorCode[$code],
     'data' => array(
-        'uid' => $uid,
-        'nums' => $nums,
+        'uid' => intval($uid),
+        'count' => $count,
         'list' => $animeDataAll
     )
 );
 
-echo stripslashes(urldecode(json_encode($result, 256)));
+$result = urldecode(json_encode($result, 256));
+echo str_replace('\/', '/', $result);
